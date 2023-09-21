@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>DSCI 554 Lab ex5</title>
+
+  <link href="./node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css">
+
+  <link href="node_modules/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+  <link rel="stylesheet" href="./github-dark-dimmed.min.css">
+  <script src="./highlight.min.js"></script>
+
+  <script src="./node_modules/highlightjs-copy/dist/highlightjs-copy.min.js"></script>
+  <link rel="stylesheet" href="./node_modules/highlightjs-copy/dist/highlightjs-copy.min.css" />
+
+  <script>
+    hljs.highlightAll();
+    hljs.addPlugin(new CopyButtonPlugin());
+  </script>
+</head>
+
+<body>
+  <h1>🧪 VEGA loading from CSV and JSON</h1>
+
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="index.html">Labs index</a></li>
+      <li class="breadcrumb-item active" aria-current="page">🧪 VEGA loading from CSV and JSON</li>
+    </ol>
+  </nav>
+
+  <h2>1. Example of data wrangling in JavaScript</h2>
+
+  <div>Download the daily <a target="_blank"
+      href="https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv">confirmed
+      daily covid19 cases</a> from the <a target="_blank" href="https://github.com/CSSEGISandData/COVID-19">CCSE
+      dataset</a>:
+    <ul>
+      <li>With wget or curl:
+        <pre><code class="sh">wget https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv</code></pre>
+      </li>
+      <li>With the browser: go to <a target="_blank"
+          href="https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv">confirmed
+          daily covid19 cases</a>, click <kbd>Download</kbd>, select the text in the page and paste it in a file</li>
+      <li>With VS Code and the GitHub extension</li>
+    </ul>
+
+    I save the file as <code>time_series_covid19_confirmed_global.csv</code> and use the script to filter the CSV:
+
+    <pre><code class="js">&lt;script src="./node_modules/d3/dist/d3.min.js">&lt;/script&gt;
+&lt;script&gt;
+  const MY_COUNTRIES = ['India', 'Belgium', 'Italy'];
+
+  d3.csv('time_series_covid19_confirmed_global.csv').then(wideData => {
+    //filter out provinces and states
+    wideData = wideData.filter(d => d['Province/State'] == '');
+
+    //only consider 3 countries
+    wideData = wideData.filter(d => MY_COUNTRIES.includes(d['Country/Region']));
+
+    //transform from wide to long format
+    var longData = [];
+    wideData.forEach((row) => {
+      delete row['Province/State'];
+      delete row['Lat'];
+      delete row['Long'];
+      Object.keys(row).forEach((colname) => {
+        if (colname != 'Country/Region') {
+          longData.push({
+            country: row['Country/Region'],
+            date: colname,
+            count: +row[colname]
+          });
+        }
+      });
+    });
+
+    function toCsv(data) {
+      const headers = [Object.keys(data[0]).join()];
+      const content = data.map(r => Object.values(r).join());
+      return headers.concat(content).join('\n');
+    }
+
+    longData = longData.filter(d => d.date.includes('/1/'));
+
+    console.log(toCsv(longData));  //copy and past console output to covid19_confirmed.csv
+  });
+&lt;/script&gt;</code></pre>
+
+    <script src="./node_modules/d3/dist/d3.min.js"></script>
+    <script>
+      const MY_COUNTRIES = ['India', 'Belgium', 'Italy'];
+
+      d3.csv('time_series_covid19_confirmed_global.csv').then(wideData => {
+        //filter out provinces and states
+        wideData = wideData.filter(d => d['Province/State'] == '');
+
+        //only consider 3 countries
+        wideData = wideData.filter(d => MY_COUNTRIES.includes(d['Country/Region']));
+
+        //transform from wide to long format
+        var longData = [];
+        wideData.forEach((row) => {
+          delete row['Province/State'];
+          delete row['Lat'];
+          delete row['Long'];
+          Object.keys(row).forEach((colname) => {
+            if (colname != 'Country/Region') {
+              longData.push({
+                country: row['Country/Region'],
+                date: colname,
+                count: +row[colname]
+              });
+            }
+          });
+        });
+
+        function toCsv(data) {
+          const headers = [Object.keys(data[0]).join()];
+          const content = data.map(r => Object.values(r).join());
+          return headers.concat(content).join('\n');
+        }
+
+        longData = longData.filter(d => d.date.includes('/1/'));
+
+        console.log(toCsv(longData));  //copy and past console output to covid19_confirmed_global.csv
+      });
+    </script>
+
+    <h2>2. 1D strip plot</h2>
+
+    <div>We reuse code from the <a target="_blank" href="https://vega.github.io/vega-lite/examples/tick_dot.html">1D
+        strip plot</a>
+      and the data pre-processed in 1. loaded from <code>covid19_confirmed.csv</code>.</div>
+
+    <pre><code class="HTML">&lt;script src="./node_modules/vega/build/vega.min.js"&gt;&lt;/script&gt;
+&lt;script src="./node_modules/vega-lite/build/vega-lite.min.js"&gt;&lt;/script&gt;
+&lt;script src="./node_modules/vega-embed/build/vega-embed.min.js"&gt;&lt;/script&gt;
+
+&lt;div id="vis-1"&gt;&lt;/div&gt;
+
+&lt;script&gt;
+  var vlSpec = {
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+    "data": { "url": "covid19_confirmed.csv" },
+    "mark": "tick",
+    "encoding": {
+      "x": { "field": "count", "type": "quantitative" }
+    };
+  vegaEmbed('#vis-1', vlSpec);
+&lt;/script&gt;</code></pre>
+  </div>
+
+  <div class="answer">
+    <script src="./node_modules/vega/build/vega.min.js"></script>
+    <script src="./node_modules/vega-lite/build/vega-lite.min.js"></script>
+    <script src="./node_modules/vega-embed/build/vega-embed.min.js"></script>
+
+    <div id="vis-1"></div>
+
+    <script>
+      var vlSpec = {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": { "url": "covid19_confirmed.csv" },
+        "mark": "tick",
+        "encoding": {
+          "x": { "field": "count", "type": "quantitative" }
+        }
+      };  //plot specifications
+      vegaEmbed('#vis-1', vlSpec);
+    </script>
+  </div>
+
+  <h2>3. Slope graph</h2>
+
+  <div>We reuse code from the <a target="_blank"
+    href="https://vega.github.io/vega-lite/examples/line_slope.html">Slope Graph</a>
+  and the data pre-processed in 1. loaded from <code>covid19_confirmed_3_1_20-21.csv</code>.</div>
+
+  <pre><code class="HTML">&lt;script src="./node_modules/vega/build/vega.min.js"&gt;&lt;/script&gt;
+&lt;script src="./node_modules/vega-lite/build/vega-lite.min.js"&gt;&lt;/script&gt;
+&lt;script src="./node_modules/vega-embed/build/vega-embed.min.js"&gt;&lt;/script&gt;
+
+&lt;div id="vis-1"&gt;&lt;/div&gt;
+
+&lt;script&gt;
+  var vlSpec = {
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+    "data": { "url": "covid19_confirmed_3_1_20-21.csv" },
+    "description": "Slope graph showing the change in COVID19 confirmed cases.",
+    "mark": "line",
+    "width": { "step": 50 },
+    "encoding": {
+      "x": {
+        "field": "date",
+        "type": "ordinal",
+        "scale": { "padding": 0.5 }
+      },
+      "y": {
+        "aggregate": "median",
+        "field": "count",
+        "type": "quantitative"
+      },
+      "color": { "field": "country", "type": "nominal" }
+    }
+  };  //plot specifications
+  vegaEmbed('#vis-1', vlSpec);
+&lt;/script&gt;</code></pre>
+  </div>
+
+  <div class="answer">
+		<script src="./node_modules/vega/build/vega.min.js"></script>
+		<script src="./node_modules/vega-lite/build/vega-lite.min.js"></script>
+		<script src="./node_modules/vega-embed/build/vega-embed.min.js"></script>
+		<div id="vis-2"></div>
+
+		<script>
+			var vlSpec = {
+				"$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+				"data": { "url": "covid19_confirmed_3_1_20-21.csv" },
+				"description": "Slope graph showing the change in COVID19 confirmed cases.",
+				"mark": "line",
+				"width": { "step": 50 },
+				"encoding": {
+					"x": {
+						"field": "date",
+						"type": "ordinal",
+						"scale": { "padding": 0.5 }
+					},
+					"y": {
+						"aggregate": "median",
+						"field": "count",
+						"type": "quantitative"
+					},
+					"color": { "field": "country", "type": "nominal" }
+				}
+			};  //plot specifications
+			vegaEmbed('#vis-2', vlSpec);
+    </script>
+  </div>
+
+  <h2>4. Multi Series Line Chart</h2>
+
+  <div>Create with the data in <code>covid19.csv</code></div>
+
+      <div>We reuse code from the <a target="_blank" href="https://vega.github.io/vega-lite/examples/line_color.html">Multi Series Line
+        Chart</a> and the data pre-processed in 1.loaded from <code>covid19_confirmed.csv</code>.</div>
+    
+      <pre><code class="HTML">&lt;script src="./node_modules/vega/build/vega.min.js"&gt;&lt;/script&gt;
+&lt;script src="./node_modules/vega-lite/build/vega-lite.min.js"&gt;&lt;/script&gt;
+&lt;script src="./node_modules/vega-embed/build/vega-embed.min.js"&gt;&lt;/script&gt;
+
+&lt;div id="vis-1"&gt;&lt;/div&gt;
+
+&lt;script&gt;
+  var vlSpec = {
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+    "description": "Covid_19 Confirmed cases of three countries",
+    "data": { "url": "covid19_confirmed.csv" },
+    "mark": "line",
+    "encoding": {
+      "x": { "field": "date", "type": "temporal" },
+      "y": { "field": "count", "type": "quantitative" },
+      "color": { "field": "country", "type": "nominal" }
+    }
+  };  //plot specifications
+  vegaEmbed('#vis-1', vlSpec);
+&lt;/script&gt;</code></pre>
+  </div>
+        
+  <div class="answer">
+		<script src="./node_modules/vega/build/vega.min.js"></script>
+		<script src="./node_modules/vega-lite/build/vega-lite.min.js"></script>
+		<script src="./node_modules/vega-embed/build/vega-embed.min.js"></script>
+		<div id="vis-3"></div>
+
+		<script>
+			var vlSpec = {
+				"$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+				"description": "Covid_19 Confirmed cases of three countries",
+				"data": { "url": "covid19_confirmed.csv" },
+				"mark": "line",
+				"encoding": {
+					"x": { "field": "date", "type": "temporal" },
+					"y": { "field": "count", "type": "quantitative" },
+					"color": { "field": "country", "type": "nominal" }
+				}
+			};  //plot specifications
+			vegaEmbed('#vis-3', vlSpec);
+    </script>
+  </div>
+
+  <div class="mt-3 text-end"><a href="#"><i class="bi bi-arrow-up"></i> top</a></div>
+</body>
+
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>DSCI 554 Lab ex4</title>
+
+  <link href="./node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css">
+
+  <link href="node_modules/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+  <link rel="stylesheet" href="./github-dark-dimmed.min.css">
+  <script src="./highlight.min.js"></script>
+
+  <script src="./node_modules/highlightjs-copy/dist/highlightjs-copy.min.js"></script>
+  <link rel="stylesheet" href="./node_modules/highlightjs-copy/dist/highlightjs-copy.min.css"/>
+
+  <script>
+    hljs.highlightAll();
+    hljs.addPlugin(new CopyButtonPlugin());
+  </script>
+
+</head>
+
+<body>
+  <h1>🧪 Loading data with D3 as CSV and JSON</h1>
+
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="index.html">Labs index</a></li>
+      <li class="breadcrumb-item active" aria-current="page">🧪 Loading data with D3 as CSV and JSON</li>
+    </ol>
+  </nav>
+
+  <h2>1. Loading data in CSV</h2>
+
+  <div>Implement the bubble chart of ex3.1 loading the data in CSV using the sample code provided.</div>
+
+  <pre><code class="HTML">&lt;script src="./node_modules/d3/dist/d3.min.js"&gt;&lt;/script&gt;
+
+&lt;script&gt;
+d3.csv("cars.csv", d => { 
+  return { 
+    name: d.name,
+    mpg: +d.mpg
+  };
+}).then(data => {
+  d3.select("#cvs-data").text(JSON.stringify(data));
+  console.log(data);
+});
+&lt;/script&gt;</code></pre>
+  </div>
+
+  <div class="answer">
+    <script src="./node_modules/d3/dist/d3.min.js"></script>
+
+    <script>
+    d3.csv("cars.csv", d => { 
+      return { 
+        name: d.name,
+        mpg: +d.mpg
+      };
+    }).then(data => {
+      d3.select("#cvs-data").text(JSON.stringify(data));
+      console.log(data);
+    });
+    </script>
+
+    <div id="cvs-data"></div>
+    </div>
+
+  <h2>2. Loading data in JSON</h2>
+
+  <pre><code class="HTML">&lt;script src="./node_modules/d3/dist/d3.min.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+d3.json("cars.json").then((data) => {
+  d3.select("#json-data").text(JSON.stringify(data));
+  console.log(data);
+});
+&lt;/script&gt;</code></pre>
+  </div>
+
+  <div class="answer">
+    <script src="./node_modules/d3/dist/d3.min.js"></script>
+    <script>
+    d3.json("cars.json").then((data) => {
+      d3.select("#json-data").text(JSON.stringify(data));
+      console.log(data);
+    });
+    </script>
+
+    <div id="json-data"></div>
+  </div>
+
+  <h2>Exercises</h2>
+
+  <h3>Exercise 1: Implement a bubble chart loading the data in CSV format.</h3>
+
+  <h3>Exercise 2: Implement a bubble chart loading the data in JSON format.</h3>
+
+  <div class="mt-3 text-end"><a href="#"><i class="bi bi-arrow-up"></i> top</a></div>
+
+</body>
+
+</html>
